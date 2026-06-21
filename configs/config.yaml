@@ -1,0 +1,98 @@
+################################## Настройки приложения / Application Settings
+app:
+  port: 43000
+  est_port: 43001 # отдельный порт для EST endpoints с mTLS / separate port for EST endpoints with mTLS
+  crl_port: 8080 # порт для обновления CRL / port for CRL update
+  crl_protocol: http # http или https / http or https
+  hostname: 0.0.0.0
+  # hostname: localhost
+  protocol: http # http или https / http or https
+#  certFile: https/tlss.lv.local.pem
+#  keyFile: https/tlss.lv.local.key
+
+################################## Настройки логирования / Logging Settings
+logging:
+  level: info # debug, info, warn, error
+  format: text # json, text
+  output: stdout # file, stdout, both
+  file: logs/tlss.log
+
+################################## Настройки авторизации при старте приложения / Authorization Settings for application start
+login:
+  authConfig: true # true - использовать конфигурацию из config.yaml, false - использовать ручной ввод / true - use config.yaml settings, false - use manual input
+  username: admin
+  password: 1gd5hfg5jdgsyrtf
+  salt: mysecuresalt123
+
+################################## Настройки базы данных / Database Settings
+database:
+  path: db/database.db
+
+################################## Первичные имена для корневого CA и подчиненного CA / Default names for Root CA and Sub CA
+root_ca_tlss:
+  commonName: TLSS Root CA
+
+sub_ca_tlss:
+  commonName: TLSS Sub CA
+
+################################## Настройки CRL / CRL Settings
+# По RFC 5280 каждый сертификат указывает CDP на CRL своего издателя:
+# - конечные сертификаты (server/client/EST) подписаны Sub CA
+# - Sub CA сертификаты подписаны Root CA
+CAcrl:
+  subCACrlURL: http://tlss.lv.local:8080/api/v1/crl/subca/pem # CRL подписанный Sub CA, для конечных сертификатов / CRL signed by Sub CA, for end-entity certs
+  rootCACrlURL: http://tlss.lv.local:8080/api/v1/crl/rootca/pem # CRL подписанный Root CA, для Sub CA сертификатов / CRL signed by Root CA, for Sub CA certs
+  unit: hours # minutes, seconds, hours
+  updateInterval: 24 # interval of CRL update / интервал обновления CRL
+
+################################## Настройки CA / CA Settings
+CApath:
+  db: true # true - сохранять в базе данных / save to database
+  server: false # false - сохранять на сервере / save to server
+
+ca_tlss:
+  path_cert: ./root_ca_tlss/root_ca_tlss.pem
+  path_key: ./root_ca_tlss/root_ca_tlss.key
+
+################################## Настройки SSH при добавлении сервера / SSH Settings for Server Addition
+add_server:
+  unit: seconds # minutes, seconds, hours
+  waitingToConnect: 3 
+
+################################## Настройки чекеров / Checker Settings
+# Проверка доступности TCP портов / TCP port availability check
+checkServer:
+  unit: seconds # minutes, seconds, hours
+  checkServerInterval: 10
+
+# Проверка валидности сертификатов / Certificate validity check
+certsValidation:
+  unit: seconds # minutes, seconds, hours
+  certsValidationInterval: 30 
+
+# Пересоздание сертификатов / Certificate recreation
+recreateCerts:
+  unit: seconds # minutes, seconds, hours
+  recreateCertsInterval: 5
+
+################################## Настройки мониторинга работы чекеров / Checker Monitoring Settings
+monitor:
+  unitTCP: seconds # minutes, seconds, hours
+  TCPInterval: 5
+  unitRecreateCerts: seconds # minutes, seconds, hours
+  RecreateCertsInterval: 3
+  unitCheckValidCerts: seconds # minutes, seconds, hours
+  CheckValidCertsInterval: 10
+
+################################## Настройки overview  / Overview Settings
+overview:
+  checkClientExpireDaysLeft: 30 # days
+  checkServerExpireDaysLeft: 30 # days
+
+################################## Настройки EST / EST Settings
+est:
+  cert_ttl_enrollment: 365 # days, срок службы (ttl) устанавливаемый сертификату при первичной выдаче используя basic auth / certificate ttl (ttl) set by the certificate issued using basic auth 
+
+#  Из-за различий в структуре для разных клиентов стоит выбрать или старый оригинальный rfc7030 или изменения на основе RFC 9908 / Choose either the original rfc7030 or changes based on RFC 9908
+estCSRAttrs:
+  rfc9908: true # true - использовать RFC 9908, false - использовать RFC 7030 / use RFC 9908, false - use RFC 7030
