@@ -5,10 +5,14 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+
     container_name: tlss-service
+
     restart: unless-stopped
+
     ports:
       - "43000:43000"
       - "8080:8080"
+
     volumes:
       - ./configs/config.yaml:/opt/app/config.yaml

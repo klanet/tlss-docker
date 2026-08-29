@@ -1,23 +1,27 @@
+FROM alpine:3.24.1 AS downloader
+
+ARG TARGETARCH
+
+WORKDIR /tmp
+
+RUN apk add --no-cache wget tar gzip jq && \
+    VERSION=$(wget -qO- https://api.github.com/repos/addspin/tlss/releases/latest | \
+        jq -r '.tag_name') && \
+    echo "Downloading tlss ${VERSION} for ${TARGETARCH}" && \
+    wget "https://github.com/addspin/tlss/releases/download/${VERSION}/tlss-linux-${TARGETARCH}.tar.gz" && \
+    tar -xzf "tlss-linux-${TARGETARCH}.tar.gz" && \
+    mv "tlss-linux-${TARGETARCH}" /tmp/tlss && \
+    chmod +x /tmp/tlss
+
+
 FROM alpine:3.24.1
 
 WORKDIR /opt/app
 
-# Копируем бинарный файл приложения
+RUN apk add --no-cache gcompat
 
-RUN apk add --no-cache wget tar gzip gcompat && \
-    wget https://github.com/addspin/tlss/releases/download/v1.4.1/tlss-linux-amd64.tar.gz && \
-    tar -xzf tlss-linux-amd64.tar.gz && \
-    rm tlss-linux-amd64.tar.gz && \
-    chmod +x /opt/app/tlss-linux-amd64
- 
-# Копируем обновленный конфигурационный файл v1.4.1
-COPY ./configs/config.yaml /opt/app/config.yaml
+COPY --from=downloader /tmp/tlss /opt/app/tlss
 
-# Делаем файл исполняемым (на случай, если права потерялись при копировании)
-RUN chmod +x /opt/app/tlss-linux-amd64
-
-# Открываем порты: старый UI/EST (43000) и новый CRL (8080)
 EXPOSE 43000 8080 43001
 
-# Исправленный синтаксис запуска программы
-CMD ["/opt/app/tlss-linux-amd64"]
+CMD ["/opt/app/tlss"]
